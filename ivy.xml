@@ -29,7 +29,7 @@
 		<dependency org="ch.qos.logback" name="logback-core" rev="1.0.9" />
 		<dependency org="ch.qos.logback" name="logback-classic" rev="1.0.9" />
 
-		<dependency org="com.datastax.cassandra" name="cassandra-driver-core" rev="2.0.5"/>
+		<dependency org="com.datastax.cassandra" name="cassandra-driver-core" rev="2.1.4" />
 
 		<!-- Jetty server stuff -->
 		<dependency org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903" />

@@ -5,4 +5,18 @@ package org.asterion;
  */
 public class AsterionException extends Exception
 {
+	public AsterionException(String message)
+	{
+		super(message);
+	}
+
+	public AsterionException(String message, Throwable cause)
+	{
+		super(message, cause);
+	}
+
+	public AsterionException(Throwable cause)
+	{
+		super(cause);
+	}
 }

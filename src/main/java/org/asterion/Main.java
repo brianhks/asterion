@@ -278,63 +278,8 @@ public class Main
 		return (m_injector);
 	}
 
-	public void runExport(Writer out, List<String> metricNames) throws DatastoreException, IOException
-	{
-		RecoveryFile recoveryFile = new RecoveryFile();
-		try
-		{
-			KairosDatastore ds = m_injector.getInstance(KairosDatastore.class);
-			Iterable<String> metrics;
 
-			if (metricNames != null && metricNames.size() > 0)
-				metrics = metricNames;
-			else
-				metrics = ds.getMetricNames();
 
-			for (String metric : metrics)
-			{
-				if (!recoveryFile.contains(metric))
-				{
-					logger.info("Exporting: " + metric);
-					QueryMetric qm = new QueryMetric(1L, 0, metric);
-					ExportQueryCallback callback = new ExportQueryCallback(metric, out);
-					ds.export(qm, callback);
-
-					recoveryFile.writeMetric(metric);
-				}
-				else
-					logger.info("Skipping metric " + metric + " because it was already exported.");
-			}
-		}
-		finally
-		{
-			recoveryFile.close();
-		}
-	}
-
-	public void runImport(InputStream in) throws IOException, DatastoreException
-	{
-		KairosDatastore ds = m_injector.getInstance(KairosDatastore.class);
-		KairosDataPointFactory dpFactory = m_injector.getInstance(KairosDataPointFactory.class);
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-
-		Gson gson = new Gson();
-		String line;
-		while ((line = reader.readLine()) != null)
-		{
-			JsonMetricParser jsonMetricParser = new JsonMetricParser(ds, new StringReader(line),
-					gson, dpFactory);
-
-			ValidationErrors validationErrors = jsonMetricParser.parse();
-
-			for (String error : validationErrors.getErrors())
-			{
-				logger.error(error);
-				System.err.println(error);
-			}
-		}
-	}
 
 	/**
 	 * Simple technique to prevent the main thread from existing until we are done
@@ -354,7 +299,7 @@ public class Main
 	}
 
 
-	public void startServices() throws KairosDBException
+	public void startServices() throws AsterionException
 	{
 		Map<Key<?>, Binding<?>> bindings =
 				m_injector.getAllBindings();
