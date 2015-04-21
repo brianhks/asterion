@@ -5,4 +5,5 @@ package org.asterion.store;
  */
 public interface DataStore
 {
+	public void close();
 }

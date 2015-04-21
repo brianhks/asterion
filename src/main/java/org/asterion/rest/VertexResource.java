@@ -17,6 +17,6 @@ public class VertexResource
 	@Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
 	public Response create()
 	{
-
+		return (null);
 	}
 }

@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.inject.*;
 import com.google.inject.util.Modules;
 import org.apache.commons.io.FileUtils;
+import org.asterion.store.DataStore;
 import org.json.JSONException;
 import org.json.JSONWriter;
 import org.slf4j.LoggerFactory;
@@ -191,41 +192,8 @@ public class Main
 
 		final Main main = new Main(propertiesFile);
 
-		if (arguments.operationCommand.equals("export"))
-		{
-			if (!isNullOrEmpty(arguments.exportFile))
-			{
-				Writer ps = new OutputStreamWriter(new FileOutputStream(arguments.exportFile,
-						arguments.appendToExportFile), "UTF-8");
-				main.runExport(ps, arguments.exportMetricNames);
-				ps.flush();
-				ps.close();
-			}
-			else
-			{
-				OutputStreamWriter writer = new OutputStreamWriter(System.out, "UTF-8");
-				main.runExport(writer, arguments.exportMetricNames);
-				writer.flush();
-			}
 
-			main.stopServices();
-		}
-		else if (arguments.operationCommand.equals("import"))
-		{
-			if (!isNullOrEmpty(arguments.exportFile))
-			{
-				FileInputStream fin = new FileInputStream(arguments.exportFile);
-				main.runImport(fin);
-				fin.close();
-			}
-			else
-			{
-				main.runImport(System.in);
-			}
-
-			main.stopServices();
-		}
-		else if (arguments.operationCommand.equals("run") || arguments.operationCommand.equals("start"))
+		if (arguments.operationCommand.equals("run") || arguments.operationCommand.equals("start"))
 		{
 			try
 			{
@@ -307,9 +275,9 @@ public class Main
 		for (Key<?> key : bindings.keySet())
 		{
 			Class bindingClass = key.getTypeLiteral().getRawType();
-			if (KairosDBService.class.isAssignableFrom(bindingClass))
+			if (AsterionService.class.isAssignableFrom(bindingClass))
 			{
-				KairosDBService service = (KairosDBService) m_injector.getInstance(bindingClass);
+				AsterionService service = (AsterionService) m_injector.getInstance(bindingClass);
 				logger.info("Starting service " + bindingClass);
 				service.start();
 				m_services.add(service);
@@ -318,10 +286,10 @@ public class Main
 	}
 
 
-	public void stopServices() throws DatastoreException, InterruptedException
+	public void stopServices() throws InterruptedException
 	{
 		logger.info("Shutting down");
-		for (KairosDBService service : m_services)
+		for (AsterionService service : m_services)
 		{
 			String serviceName = service.getClass().getName();
 			logger.info("Stopping " + serviceName);
@@ -337,7 +305,7 @@ public class Main
 		}
 
 		//Stop the datastore
-		KairosDatastore ds = m_injector.getInstance(KairosDatastore.class);
+		DataStore ds = m_injector.getInstance(DataStore.class);
 		ds.close();
 	}
 
@@ -387,75 +355,6 @@ public class Main
 		}
 	}
 
-	private class ExportQueryCallback implements QueryCallback
-	{
-		private final Writer m_writer;
-		private JSONWriter m_jsonWriter;
-		private final String m_metric;
-
-		public ExportQueryCallback(String metricName, Writer out)
-		{
-			m_metric = metricName;
-			m_writer = out;
-		}
-
-
-		@Override
-		public void addDataPoint(DataPoint datapoint) throws IOException
-		{
-			try
-			{
-				m_jsonWriter.array().value(datapoint.getTimestamp());
-				datapoint.writeValueToJson(m_jsonWriter);
-				m_jsonWriter.value(datapoint.getApiDataType()).endArray();
-			}
-			catch (JSONException e)
-			{
-				throw new IOException(e);
-			}
-		}
-
-		@Override
-		public void startDataPointSet(String type, Map<String, String> tags) throws IOException
-		{
-			if (m_jsonWriter != null)
-				endDataPoints();
-
-			try
-			{
-				m_jsonWriter = new JSONWriter(m_writer);
-				m_jsonWriter.object();
-				m_jsonWriter.key("name").value(m_metric);
-				m_jsonWriter.key("tags").value(tags);
-
-				m_jsonWriter.key("datapoints").array();
-
-			}
-			catch (JSONException e)
-			{
-				throw new IOException(e);
-			}
-		}
-
-		@Override
-		public void endDataPoints() throws IOException
-		{
-			try
-			{
-				if (m_jsonWriter != null)
-				{
-					m_jsonWriter.endArray().endObject();
-					m_writer.write("\n");
-					m_jsonWriter = null;
-				}
-			}
-			catch (JSONException e)
-			{
-				throw new IOException(e);
-			}
-
-		}
-	}
 
 	@SuppressWarnings("UnusedDeclaration")
 	private static class Arguments
