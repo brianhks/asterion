@@ -4,6 +4,7 @@ import com.datastax.driver.core.*;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,10 +115,43 @@ public class CassandraStore implements DataStore
 
 	public void addEdge(ByteBuffer sourceVertexId, ByteBuffer destVertexId, Direction direction, String edgeType)
 	{
+		try (Session session = m_cassandraClient.getKeyspaceSession())
+		{
+			//Prepared statements need to be moved to a place where they
+			//are only "prepared" once.
+			PreparedStatement ps = session.prepare("INSERT INTO vertex_edges (vertex_id, edge_type, direction, edge_id, when) " +
+					"VALUES (?, ?, ?, ?, ?);");
+
+			BoundStatement bs = new BoundStatement(ps);
+			Date now = new Date(System.currentTimeMillis());
+
+			bs.setBytesUnsafe(0, sourceVertexId);
+			bs.setString(1, edgeType);
+			bs.setInt(2, direction.getValue());
+			bs.setBytesUnsafe(3, destVertexId);
+			bs.setDate(4, now);
+
+			//todo: look at execute async
+			session.execute(bs);
+
+			bs = new BoundStatement(ps);
+
+			bs.setBytesUnsafe(0, destVertexId);
+			bs.setString(1, edgeType);
+			bs.setInt(2, direction.opposite());
+			bs.setBytesUnsafe(3, sourceVertexId);
+			bs.setDate(4, now);
+
+			session.execute(bs);
+		}
 	}
 
 	public void deleteEdge(ByteBuffer sourceVertexId, ByteBuffer destVertexId, String edgeType)
 	{
+		try (Session session = m_cassandraClient.getKeyspaceSession())
+		{
+
+		}
 	}
 
 	public Map<String, String> getVertexProperties(ByteBuffer vertexId)
