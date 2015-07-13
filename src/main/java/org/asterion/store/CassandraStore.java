@@ -26,12 +26,13 @@ public class CassandraStore implements DataStore
 			"CREATE TABLE IF NOT EXISTS vertex_edges (" +
 			"  vertex_id blob," +
 			"  edge_type text," +
+			"  bucket_start timestamp," +
 
 			"  direction int," +
 			"  edge_id blob," +
 
 			"  when timestamp," +
-			"  PRIMARY KEY ((vertex_id, edge_type), direction, edge_id)" +
+			"  PRIMARY KEY ((vertex_id, edge_type, bucket_start), direction, edge_id)" +
 			")";
 
 	/**
