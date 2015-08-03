@@ -169,8 +169,8 @@ testClasspath = new Classpath(jp.getLibraryJars())
 testClasspath.addPath(jp.getJarRule().getTarget())
 
 
-testSources = new RegExFileSet("src/test/java", ".*Test\\.java").recurse()
-		.addExcludeFiles("CassandraDatastoreTest.java")
+testSources = new RegExFileSet("src/test/java", "Test.*\\.java").recurse()
+		//.addExcludeFiles("CassandraDatastoreTest.java")
 		.getFilePaths()
 testCompileRule = jp.getTestCompileRule()
 ivyTestResolve = ivy.getResolveRule("test")
